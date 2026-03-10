@@ -1,4 +1,27 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HTML5 Tower Defense</title>
+    <link rel="stylesheet" href="game.css"> <!-- Link to your CSS file -->
+</head>
+<body>
+    <div id="game-container">
+        <!-- The canvas is where the game graphics will be drawn -->
+        <canvas id="canvas" width="800" height="600">
+            Your browser does not support the HTML5 Canvas tag.
+        </canvas>
+        
+        <!-- UI elements for controls and information -->
+        <div class="controls-sidebar">
+            <h3>Controls</h3>
+            <button id="playpause-button">Play / Pause</button>
+            <div id="money-display">Money: $100</div>
+            <!-- Add more UI elements for placing towers, health display, etc. -->
+        </div>
+    </div>
 
+    <script src="game.js"></script> <!-- Link to your JavaScript logic -->
+</body>
 </html>
