@@ -3,22 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Blooket TD Clone</title>
+    <title>Fighter Defense</title>
     <style>
         :root {
-            --purple: #8e44ad;
-            --dark-purple: #732d91;
-            --wood-dark: #633324;
-            --wood-light: #8b5a2b;
+            --purple: #a44cd3;
+            --dark-purple: #7d34a8;
+            --sidebar-bg: #8b4513;
+            --sidebar-accent: #5d2e0d;
             --grass-light: #52c234;
-            --grass-dark: #009e49;
-            --path-color: #8b4513;
+            --grass-dark: #45b62b;
             --ui-font: 'Arial Black', Gadget, sans-serif;
         }
 
         body {
             margin: 0;
-            background: #2c3e50;
+            background: #1a1a1a;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -34,77 +33,66 @@
             height: 750px;
             display: flex;
             flex-direction: column;
-            box-shadow: 0 0 100px rgba(0,0,0,0.5);
-            border-radius: 12px;
-            overflow: hidden;
+            box-shadow: 0 0 100px rgba(0,0,0,0.8);
+            border: 4px solid #333;
         }
 
-        /* Top Bar */
         #header {
             height: 60px;
             background: var(--purple);
             border-bottom: 5px solid var(--dark-purple);
             display: flex;
-            justify-content: flex-end;
+            justify-content: space-between;
             align-items: center;
             padding: 0 40px;
-            gap: 40px;
             font-size: 28px;
         }
 
-        .stat-icon {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        /* Main Game Area */
         #game-main {
             display: flex;
             flex: 1;
+            background: #2c3e50;
         }
 
         #canvas-holder {
             position: relative;
-            background: cadetblue;
             flex: 1;
+            background: #27ae60;
         }
 
         canvas {
             display: block;
-            cursor: pointer;
         }
 
-        /* Sidebar */
         #sidebar {
-            width: 280px;
-            background: var(--wood-dark);
-            border-left: 6px solid #4a261c;
+            width: 300px;
+            background: var(--sidebar-bg);
+            border-left: 6px solid var(--sidebar-accent);
             padding: 15px;
             display: flex;
             flex-direction: column;
             gap: 15px;
-            overflow-y: auto;
         }
 
-        .round-card {
+        .round-display {
             background: #e74c3c;
             border: 4px solid #c0392b;
             border-radius: 12px;
-            padding: 15px;
+            padding: 10px;
             text-align: center;
-            font-size: 24px;
-            box-shadow: inset 0 0 10px rgba(0,0,0,0.3);
+            font-size: 26px;
         }
 
-        #blook-grid {
+        #fighter-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
+            gap: 8px;
+            max-height: 400px;
+            overflow-y: auto;
         }
 
-        .blook-option {
-            background: rgba(0,0,0,0.2);
+        .fighter-option {
+            background: rgba(0,0,0,0.3);
             border-radius: 10px;
             padding: 5px;
             text-align: center;
@@ -113,10 +101,9 @@
             transition: 0.1s;
         }
 
-        .blook-option:hover { background: rgba(255,255,255,0.1); }
-        .blook-option.selected { border-color: #f1c40f; background: rgba(241, 196, 15, 0.2); }
+        .fighter-option.selected { border-color: #f1c40f; background: rgba(241, 196, 15, 0.2); }
 
-        .blook-box {
+        .fighter-icon-box {
             width: 60px;
             height: 60px;
             background: #fff;
@@ -125,11 +112,11 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 40px;
-            box-shadow: 0 4px 0 rgba(0,0,0,0.2);
+            font-size: 35px;
+            box-shadow: 0 4px 0 rgba(0,0,0,0.3);
         }
 
-        .cost-tag {
+        .cost-label {
             background: #2980b9;
             font-size: 14px;
             border-radius: 5px;
@@ -137,31 +124,41 @@
             display: block;
         }
 
-        #start-btn {
-            background: #3498db;
-            border: none;
-            border-bottom: 6px solid #2980b9;
-            color: white;
-            padding: 15px;
-            font-size: 24px;
+        #upgrade-panel {
+            background: rgba(0,0,0,0.4);
             border-radius: 12px;
-            cursor: pointer;
-            margin-top: auto;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            padding: 15px;
+            display: none;
+            flex-direction: column;
             gap: 10px;
         }
 
-        #start-btn:active {
-            transform: translateY(2px);
-            border-bottom-width: 4px;
+        .action-btn {
+            border: none;
+            color: white;
+            padding: 12px;
+            font-size: 18px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-family: var(--ui-font);
+            text-align: center;
+        }
+
+        #speed-btn {
+            background: #3498db;
+            border-bottom: 6px solid #2980b9;
+            margin-top: auto;
+        }
+
+        #upgrade-btn {
+            background: #2ecc71;
+            border-bottom: 6px solid #27ae60;
         }
 
         #game-over {
             position: absolute;
             inset: 0;
-            background: rgba(0,0,0,0.8);
+            background: rgba(0,0,0,0.9);
             display: none;
             flex-direction: column;
             justify-content: center;
@@ -173,37 +170,38 @@
 <body>
 
     <div id="game-container">
-        <!-- TOP UI -->
         <div id="header">
-            <div class="stat-icon"><span id="gold">100</span> <span style="color: #f1c40f;">🪙</span></div>
-            <div class="stat-icon"><span id="lives">100</span> <span style="color: #e74c3c;">❤️</span></div>
+            <div>FIGHTER DEFENSE</div>
+            <div style="display: flex; gap: 30px;">
+                <span><span id="gold">200</span> 🪙</span>
+                <span><span id="lives">100</span> ❤️</span>
+            </div>
         </div>
 
         <div id="game-main">
-            <!-- CANVAS AREA -->
             <div id="canvas-holder">
-                <canvas id="gameCanvas" width="820" height="690"></canvas>
+                <canvas id="gameCanvas" width="800" height="690"></canvas>
                 <div id="game-over">
-                    <h1 style="font-size: 60px; color: #e74c3c;">GAME OVER</h1>
-                    <p style="font-size: 24px;">You reached Round <span id="final-round">0</span></p>
-                    <button onclick="location.reload()" style="padding: 15px 30px; border-radius: 10px; border:none; background: #3498db; color:white; font-size: 20px; cursor:pointer;">RESTART</button>
+                    <h1 style="font-size: 60px; color:#e74c3c">GAME OVER</h1>
+                    <p>Round Survived: <span id="final-round">1</span></p>
+                    <button class="action-btn" style="background:#3498db" onclick="location.reload()">REPLAY</button>
                 </div>
             </div>
 
-            <!-- SIDEBAR UI -->
             <div id="sidebar">
-                <div class="round-card">Round <span id="round">1</span></div>
+                <div class="round-display">Round <span id="round">1</span></div>
                 
-                <div id="blook-grid">
-                    <!-- Blooks will be injected here -->
+                <div id="fighter-grid"></div>
+
+                <div id="upgrade-panel">
+                    <div id="upgrade-title" style="color:#f1c40f">Fighter Info</div>
+                    <div id="upgrade-stats" style="font-size:12px; font-family: sans-serif;">Lvl 1 | Dmg: 5 | Rng: 100</div>
+                    <button id="upgrade-btn" class="action-btn" onclick="upgradeFighter()">UPGRADE (<span id="up-cost">50</span> 🪙)</button>
+                    <button class="action-btn" style="background:#e74c3c; font-size:14px;" onclick="deselectFighter()">CLOSE</button>
                 </div>
 
-                <div style="font-size: 14px; text-align: center; color: #bdc3c7;">
-                    Click a Blook, then click the grid to place!
-                </div>
-
-                <button id="start-btn" onclick="startWave()">
-                    <span>▶️</span> x1
+                <button id="speed-btn" class="action-btn" onclick="toggleSpeed()">
+                    ▶️ x1
                 </button>
             </div>
         </div>
@@ -213,324 +211,304 @@
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         
-        // Constants
-        const TILE_SIZE = 45;
-        const GRID_W = 18;
+        const TILE_SIZE = 46;
+        const GRID_W = 17;
         const GRID_H = 15;
 
-        // Assets / Emojis as Blooks
-        const TOWER_TYPES = [
-            { id: 0, name: "Chick", icon: "🐥", cost: 30, range: 100, damage: 6, rate: 30, color: "#f1c40f" },
-            { id: 1, name: "Squirrel", icon: "🐿️", cost: 40, range: 130, damage: 12, rate: 45, color: "#e67e22" },
-            { id: 2, name: "Owl", icon: "🦉", cost: 60, range: 160, damage: 9, rate: 20, color: "#9b59b6" },
-            { id: 3, name: "Pig", icon: "🐷", cost: 50, range: 110, damage: 15, rate: 50, color: "#ff9ff3" },
-            { id: 4, name: "Slime", icon: "👽", cost: 80, range: 200, damage: 5, rate: 15, color: "#1dd1a1" },
-            { id: 5, name: "Dragon", icon: "🐉", cost: 150, range: 250, damage: 45, rate: 70, color: "#ee5253" },
-            { id: 6, name: "Cat", icon: "🐱", cost: 30, range: 90, damage: 5, rate: 25, color: "#feca57" },
-            { id: 7, name: "Wolf", icon: "🐺", cost: 70, range: 140, damage: 20, rate: 40, color: "#54a0ff" },
-            { id: 8, name: "Bird", icon: "🦜", cost: 100, range: 180, damage: 14, rate: 10, color: "#10ac84" }
+        // Configuration
+        const FIGHTER_TYPES = [
+            { name: "Chick", icon: "🐥", cost: 30, range: 100, damage: 6, rate: 40 },
+            { name: "Squirrel", icon: "🐿️", cost: 50, range: 130, damage: 12, rate: 50 },
+            { name: "Owl", icon: "🦉", cost: 70, range: 160, damage: 10, rate: 25 },
+            { name: "Pig", icon: "🐷", cost: 40, range: 110, damage: 15, rate: 60 },
+            { name: "Monkey", icon: "🐒", cost: 100, range: 150, damage: 25, rate: 45 },
+            { name: "Dragon", icon: "🐉", cost: 200, range: 250, damage: 50, rate: 80 }
         ];
 
         // Game State
-        let gold = 100;
+        let gold = 200;
         let lives = 100;
         let round = 1;
+        let gameSpeed = 1;
         let isGameOver = false;
         let waveActive = false;
-        let enemySpawning = false;
-        let selectedBlookIdx = -1;
         
-        let towers = [];
+        let fighters = [];
         let enemies = [];
         let projectiles = [];
+        let selectedFighterIdx = -1; // For purchasing
+        let activeFighter = null; // For upgrading
 
-        // Define Path (Grid coords)
+        // Path
         const gridPath = [
-            {x: 2, y: 0}, {x: 2, y: 3}, {x: 10, y: 3}, {x: 10, y: 8},
-            {x: 4, y: 8}, {x: 4, y: 12}, {x: 15, y: 12}, {x: 15, y: 6},
-            {x: 17, y: 6}
+            {x: 0, y: 7}, {x: 5, y: 7}, {x: 5, y: 3}, {x: 12, y: 3},
+            {x: 12, y: 11}, {x: 3, y: 11}, {x: 3, y: 14}, {x: 17, y: 14}
         ];
-        
-        // Convert to Pixels
         const pixelPath = gridPath.map(p => ({ x: p.x * TILE_SIZE + TILE_SIZE/2, y: p.y * TILE_SIZE + TILE_SIZE/2 }));
 
-        // Grid Occupancy
+        // Grid
         const occupied = Array(GRID_H).fill().map(() => Array(GRID_W).fill(false));
-        // Mark path as occupied
-        function markPath() {
-            for(let i=0; i < gridPath.length - 1; i++) {
-                let start = gridPath[i];
-                let end = gridPath[i+1];
-                let xMin = Math.min(start.x, end.x);
-                let xMax = Math.max(start.x, end.x);
-                let yMin = Math.min(start.y, end.y);
-                let yMax = Math.max(start.y, end.y);
-                for(let y = yMin; y <= yMax; y++) {
-                    for(let x = xMin; x <= xMax; x++) {
-                        occupied[y][x] = true;
-                    }
-                }
-            }
-        }
-        markPath();
 
-        // UI Setup
-        function initUI() {
-            const grid = document.getElementById('blook-grid');
-            TOWER_TYPES.forEach((t, i) => {
+        // Initialization
+        function initGrid() {
+            const gridDiv = document.getElementById('fighter-grid');
+            FIGHTER_TYPES.forEach((f, i) => {
                 const div = document.createElement('div');
-                div.className = 'blook-option';
-                div.id = `blook-${i}`;
-                div.onclick = () => selectBlook(i);
-                div.innerHTML = `
-                    <div class="blook-box">${t.icon}</div>
-                    <span class="cost-tag">${t.cost}</span>
-                `;
-                grid.appendChild(div);
+                div.className = 'fighter-option';
+                div.id = `f-${i}`;
+                div.onclick = () => {
+                    selectedFighterIdx = i;
+                    activeFighter = null;
+                    document.getElementById('upgrade-panel').style.display = 'none';
+                    document.querySelectorAll('.fighter-option').forEach(el => el.classList.remove('selected'));
+                    div.classList.add('selected');
+                };
+                div.innerHTML = `<div class="fighter-icon-box">${f.icon}</div><span class="cost-label">${f.cost}</span>`;
+                gridDiv.appendChild(div);
             });
-            updateStats();
+            updateUI();
         }
 
-        function selectBlook(i) {
-            selectedBlookIdx = i;
-            document.querySelectorAll('.blook-option').forEach(el => el.classList.remove('selected'));
-            document.getElementById(`blook-${i}`).classList.add('selected');
-        }
-
-        function updateStats() {
+        function updateUI() {
             document.getElementById('gold').innerText = Math.floor(gold);
             document.getElementById('lives').innerText = lives;
             document.getElementById('round').innerText = round;
         }
 
-        // --- Game Classes ---
+        function toggleSpeed() {
+            gameSpeed = gameSpeed === 1 ? 2.5 : 1;
+            document.getElementById('speed-btn').innerText = gameSpeed === 1 ? "▶️ x1" : "⏩ x2.5";
+        }
 
+        // Classes
         class Enemy {
             constructor() {
                 this.x = pixelPath[0].x;
                 this.y = pixelPath[0].y;
                 this.targetIdx = 1;
-                this.maxHp = 20 + (round * 15);
+                this.maxHp = 25 + (round * 18);
                 this.hp = this.maxHp;
-                this.speed = 1.5 + (round * 0.04);
-                this.size = 30;
-                this.reward = 5;
+                this.speed = 1.6 + (round * 0.05);
             }
-
             update() {
                 const target = pixelPath[this.targetIdx];
                 const dx = target.x - this.x;
                 const dy = target.y - this.y;
                 const dist = Math.sqrt(dx*dx + dy*dy);
+                const step = this.speed * gameSpeed;
 
-                if (dist < this.speed) {
+                if (dist < step) {
                     this.targetIdx++;
                     if (this.targetIdx >= pixelPath.length) {
                         lives -= 5;
-                        this.hp = -1; // Flag for removal
-                        updateStats();
-                        if (lives <= 0) doGameOver();
+                        this.hp = -1;
+                        updateUI();
+                        if (lives <= 0) endGame();
                     }
                 } else {
-                    this.x += (dx/dist) * this.speed;
-                    this.y += (dy/dist) * this.speed;
+                    this.x += (dx/dist) * step;
+                    this.y += (dy/dist) * step;
                 }
             }
-
             draw() {
-                // Shadow
-                ctx.fillStyle = 'rgba(0,0,0,0.2)';
-                ctx.fillRect(this.x - 12, this.y - 12, 24, 24);
-                // Body
                 ctx.font = "24px Arial";
                 ctx.textAlign = "center";
-                ctx.textBaseline = "middle";
-                ctx.fillText("📦", this.x, this.y);
-                // HP Bar
-                ctx.fillStyle = '#c0392b';
+                ctx.fillText("📦", this.x, this.y + 8);
+                ctx.fillStyle = "#c0392b";
                 ctx.fillRect(this.x - 15, this.y - 20, 30, 4);
-                ctx.fillStyle = '#2ecc71';
-                ctx.fillRect(this.x - 15, this.y - 20, 30 * (this.hp/this.maxHp), 4);
+                ctx.fillStyle = "#2ecc71";
+                ctx.fillRect(this.x - 15, this.y - 20, 30 * (Math.max(0, this.hp)/this.maxHp), 4);
             }
         }
 
-        class Tower {
+        class Fighter {
             constructor(gx, gy, type) {
-                this.gx = gx;
-                this.gy = gy;
+                this.gx = gx; this.gy = gy;
                 this.x = gx * TILE_SIZE + TILE_SIZE/2;
                 this.y = gy * TILE_SIZE + TILE_SIZE/2;
                 this.type = {...type};
+                this.level = 1;
                 this.cooldown = 0;
             }
-
             update() {
-                if (this.cooldown > 0) this.cooldown--;
+                if (this.cooldown > 0) this.cooldown -= gameSpeed;
                 if (this.cooldown <= 0) {
-                    const target = enemies.find(e => {
-                        const d = Math.sqrt((e.x - this.x)**2 + (e.y - this.y)**2);
-                        return d < this.type.range;
-                    });
+                    const target = enemies.find(e => Math.sqrt((e.x-this.x)**2 + (e.y-this.y)**2) < this.type.range);
                     if (target) {
-                        projectiles.push(new Projectile(this.x, this.y, target, this.type));
+                        projectiles.push(new Projectile(this.x, this.y, target, this.type.damage));
                         this.cooldown = this.type.rate;
                     }
                 }
             }
-
             draw() {
-                // Background Tile
-                ctx.fillStyle = 'rgba(255,255,255,0.1)';
-                ctx.fillRect(this.gx * TILE_SIZE + 2, this.gy * TILE_SIZE + 2, TILE_SIZE-4, TILE_SIZE-4);
-                // Icon
+                ctx.save();
+                ctx.globalAlpha = 0.6; // Seethrough Fighters
                 ctx.font = "32px Arial";
                 ctx.textAlign = "center";
-                ctx.textBaseline = "middle";
-                ctx.fillText(this.type.icon, this.x, this.y);
+                ctx.fillText(this.type.icon, this.x, this.y + 10);
+                if (activeFighter === this) {
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.type.range, 0, Math.PI*2);
+                    ctx.strokeStyle = "rgba(255, 255, 255, 0.3)";
+                    ctx.stroke();
+                }
+                ctx.restore();
+                ctx.fillStyle = "white";
+                ctx.font = "10px Arial";
+                ctx.fillText("Lv" + this.level, this.x, this.y + 22);
             }
         }
 
         class Projectile {
-            constructor(x, y, target, type) {
+            constructor(x, y, target, dmg) {
                 this.x = x; this.y = y; this.target = target;
-                this.speed = 8;
-                this.damage = type.damage;
-                this.color = type.color;
-                this.dead = false;
+                this.dmg = dmg; this.dead = false;
             }
-
             update() {
                 const dx = this.target.x - this.x;
                 const dy = this.target.y - this.y;
                 const dist = Math.sqrt(dx*dx + dy*dy);
+                const step = 10 * gameSpeed;
 
-                if (dist < this.speed) {
-                    this.target.hp -= this.damage;
+                if (dist < step) {
+                    this.target.hp -= this.dmg;
                     this.dead = true;
                 } else {
-                    this.x += (dx/dist) * this.speed;
-                    this.y += (dy/dist) * this.speed;
+                    this.x += (dx/dist) * step;
+                    this.y += (dy/dist) * step;
                 }
             }
-
             draw() {
-                ctx.fillStyle = this.color;
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, 4, 0, Math.PI*2);
-                ctx.fill();
+                ctx.fillStyle = "#f1c40f";
+                ctx.beginPath(); ctx.arc(this.x, this.y, 4, 0, Math.PI*2); ctx.fill();
             }
         }
 
-        // --- Interaction ---
+        // Logic
+        function upgradeFighter() {
+            if (!activeFighter) return;
+            const cost = activeFighter.level * 50;
+            if (gold >= cost) {
+                gold -= cost;
+                activeFighter.level++;
+                activeFighter.type.damage *= 1.4;
+                activeFighter.type.range *= 1.1;
+                activeFighter.type.rate *= 0.9;
+                showUpgradePanel(activeFighter);
+                updateUI();
+            }
+        }
 
-        canvas.addEventListener('click', (e) => {
-            if (isGameOver || selectedBlookIdx === -1) return;
+        function deselectFighter() {
+            activeFighter = null;
+            document.getElementById('upgrade-panel').style.display = 'none';
+        }
+
+        function showUpgradePanel(f) {
+            activeFighter = f;
+            selectedFighterIdx = -1;
+            document.querySelectorAll('.fighter-option').forEach(el => el.classList.remove('selected'));
+            const panel = document.getElementById('upgrade-panel');
+            panel.style.display = 'flex';
+            document.getElementById('upgrade-title').innerText = f.type.name;
+            document.getElementById('upgrade-stats').innerText = `Level: ${f.level} | Dmg: ${Math.round(f.type.damage)} | Range: ${Math.round(f.type.range)}`;
+            document.getElementById('up-cost').innerText = f.level * 50;
+        }
+
+        function startWave() {
+            if (waveActive) return;
+            waveActive = true;
+            let count = 8 + round * 4;
+            let spawned = 0;
+            const timer = setInterval(() => {
+                if (isGameOver) clearInterval(timer);
+                enemies.push(new Enemy());
+                spawned++;
+                if (spawned >= count) {
+                    clearInterval(timer);
+                    const checkEnd = setInterval(() => {
+                        if (enemies.length === 0) {
+                            clearInterval(checkEnd);
+                            waveActive = false;
+                            round++;
+                            gold += 60;
+                            updateUI();
+                        }
+                    }, 500);
+                }
+            }, 700 / gameSpeed);
+        }
+
+        canvas.addEventListener('mousedown', (e) => {
             const rect = canvas.getBoundingClientRect();
             const gx = Math.floor((e.clientX - rect.left) / TILE_SIZE);
             const gy = Math.floor((e.clientY - rect.top) / TILE_SIZE);
 
-            if (gx < 0 || gx >= GRID_W || gy < 0 || gy >= GRID_H) return;
+            // Clicked existing fighter?
+            const clickedF = fighters.find(f => f.gx === gx && f.gy === gy);
+            if (clickedF) {
+                showUpgradePanel(clickedF);
+                return;
+            }
 
-            if (!occupied[gy][gx]) {
-                const type = TOWER_TYPES[selectedBlookIdx];
-                if (gold >= type.cost) {
+            // Buying?
+            if (selectedFighterIdx !== -1) {
+                const type = FIGHTER_TYPES[selectedFighterIdx];
+                if (gold >= type.cost && !occupied[gy][gx]) {
                     gold -= type.cost;
-                    towers.push(new Tower(gx, gy, type));
+                    fighters.push(new Fighter(gx, gy, type));
                     occupied[gy][gx] = true;
-                    updateStats();
+                    updateUI();
                 }
             }
         });
 
-        // --- Core Loops ---
-
         function drawMap() {
-            // Grass Tiling
             for(let y=0; y<GRID_H; y++) {
                 for(let x=0; x<GRID_W; x++) {
-                    ctx.fillStyle = (x + y) % 2 === 0 ? '#52c234' : '#45b62b';
-                    ctx.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+                    ctx.fillStyle = (x + y) % 2 === 0 ? "#52c234" : "#45b62b";
+                    ctx.fillRect(x*TILE_SIZE, y*TILE_SIZE, TILE_SIZE, TILE_SIZE);
                 }
             }
-
-            // Path
-            ctx.strokeStyle = '#8b4513';
+            ctx.strokeStyle = "#8b4513";
             ctx.lineWidth = TILE_SIZE;
-            ctx.lineCap = 'square';
-            ctx.lineJoin = 'round';
+            ctx.lineCap = "square";
+            ctx.lineJoin = "round";
             ctx.beginPath();
             ctx.moveTo(pixelPath[0].x, pixelPath[0].y);
-            for(let i=1; i<pixelPath.length; i++) ctx.lineTo(pixelPath[i].x, pixelPath[i].y);
-            ctx.stroke();
-
-            // Decorative inner path
-            ctx.strokeStyle = '#a0522d';
-            ctx.lineWidth = TILE_SIZE - 10;
+            pixelPath.forEach(p => ctx.lineTo(p.x, p.y));
             ctx.stroke();
         }
 
-        function startWave() {
-            if (waveActive || enemySpawning) return;
-            waveActive = true;
-            enemySpawning = true;
-            let count = 5 + round * 3;
-            let spawned = 0;
-            const intv = setInterval(() => {
-                if (isGameOver) { clearInterval(intv); return; }
-                enemies.push(new Enemy());
-                spawned++;
-                if (spawned >= count) {
-                    clearInterval(intv);
-                    enemySpawning = false;
-                }
-            }, 600);
-        }
-
-        function doGameOver() {
+        function endGame() {
             isGameOver = true;
             document.getElementById('game-over').style.display = 'flex';
             document.getElementById('final-round').innerText = round;
         }
 
-        function gameLoop() {
+        function loop() {
             if (isGameOver) return;
-
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             drawMap();
 
-            // Towers
-            towers.forEach(t => { t.update(); t.draw(); });
-
-            // Enemies
+            fighters.forEach(f => { f.update(); f.draw(); });
             enemies = enemies.filter(e => e.hp > 0);
             enemies.forEach(e => {
-                e.update();
-                e.draw();
-                // Check if killed to give gold
-                if (e.hp <= 0 && e.targetIdx < pixelPath.length) {
-                    gold += e.reward;
-                    updateStats();
-                }
+                e.update(); e.draw();
+                if (e.hp <= 0 && e.targetIdx < pixelPath.length) gold += 8;
             });
-
-            // Projectiles
             projectiles = projectiles.filter(p => !p.dead && p.target.hp > 0);
             projectiles.forEach(p => { p.update(); p.draw(); });
 
-            // End of round check
-            if (waveActive && enemies.length === 0 && !enemySpawning) {
-                waveActive = false;
-                round++;
-                gold += 50; // Round bonus
-                updateStats();
+            if (!waveActive && enemies.length === 0) {
+                startWave();
             }
 
-            requestAnimationFrame(gameLoop);
+            requestAnimationFrame(loop);
         }
 
-        // Init
-        initUI();
-        gameLoop();
+        initGrid();
+        loop();
     </script>
 </body>
 </html>
