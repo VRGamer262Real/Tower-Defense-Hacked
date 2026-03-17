@@ -1,5 +1,344 @@
 <!DOCTYPE html>
 <html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HTML5 Tower Defense</title>
+    <style>
+        body {
+            margin: 0;
+            background: #2c3e50;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            color: white;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+        }
 
+        #game-container {
+            position: relative;
+            box-shadow: 0 0 50px rgba(0,0,0,0.5);
+            border: 4px solid #34495e;
+            border-radius: 8px;
+        }
+
+        canvas {
+            display: block;
+            background: #27ae60;
+            cursor: crosshair;
+        }
+
+        #ui {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            pointer-events: none;
+            text-shadow: 2px 2px 2px rgba(0,0,0,0.5);
+        }
+
+        .stat {
+            font-size: 20px;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        #controls {
+            margin-top: 20px;
+            background: #34495e;
+            padding: 15px;
+            border-radius: 8px;
+            display: flex;
+            gap: 20px;
+        }
+
+        .btn {
+            background: #e67e22;
+            border: none;
+            padding: 10px 20px;
+            color: white;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+
+        .btn:active { transform: scale(0.95); }
+        .btn:disabled { background: #7f8c8d; cursor: not-allowed; }
+
+        #game-over {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.8);
+            padding: 40px;
+            border-radius: 15px;
+            text-align: center;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+        <div id="ui">
+            <div class="stat">Gold: <span id="gold">100</span></div>
+            <div class="stat">Lives: <span id="lives">10</span></div>
+            <div class="stat">Wave: <span id="wave">1</span></div>
+        </div>
+        <div id="game-over">
+            <h1>GAME OVER</h1>
+            <p>You defended well!</p>
+            <button class="btn" onclick="location.reload()">Restart</button>
+        </div>
+    </div>
+
+    <div id="controls">
+        <div><strong>Tower Cost: 50 Gold</strong> (Click map to build)</div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const goldEl = document.getElementById('gold');
+        const livesEl = document.getElementById('lives');
+        const waveEl = document.getElementById('wave');
+        const gameOverEl = document.getElementById('game-over');
+
+        let gold = 100;
+        let lives = 10;
+        let wave = 1;
+        let enemies = [];
+        let towers = [];
+        let projectiles = [];
+        let frames = 0;
+        let isGameOver = false;
+
+        const TILE_SIZE = 40;
+        const TOWER_COST = 50;
+
+        // Path waypoints
+        const path = [
+            {x: 0, y: 100},
+            {x: 700, y: 100},
+            {x: 700, y: 300},
+            {x: 100, y: 300},
+            {x: 100, y: 500},
+            {x: 800, y: 500}
+        ];
+
+        class Enemy {
+            constructor(health) {
+                this.x = path[0].x;
+                this.y = path[0].y;
+                this.targetIndex = 1;
+                this.speed = 1.5 + (wave * 0.1);
+                this.radius = 12;
+                this.health = health;
+                this.maxHealth = health;
+            }
+
+            draw() {
+                // Health bar
+                ctx.fillStyle = 'red';
+                ctx.fillRect(this.x - 15, this.y - 20, 30, 4);
+                ctx.fillStyle = 'green';
+                ctx.fillRect(this.x - 15, this.y - 20, 30 * (this.health / this.maxHealth), 4);
+
+                // Body
+                ctx.fillStyle = '#c0392b';
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            update() {
+                const target = path[this.targetIndex];
+                const dx = target.x - this.x;
+                const dy = target.y - this.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+
+                if (dist < this.speed) {
+                    this.targetIndex++;
+                    if (this.targetIndex >= path.length) {
+                        lives--;
+                        this.health = 0; // Trigger removal
+                        livesEl.innerText = lives;
+                        if (lives <= 0) endGame();
+                        return;
+                    }
+                } else {
+                    this.x += (dx / dist) * this.speed;
+                    this.y += (dy / dist) * this.speed;
+                }
+            }
+        }
+
+        class Tower {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.range = 150;
+                this.cooldown = 0;
+                this.fireRate = 30; // Frames
+            }
+
+            draw() {
+                ctx.fillStyle = '#2980b9';
+                ctx.fillRect(this.x - 15, this.y - 15, 30, 30);
+                
+                // Range circle overlay (optional visualization)
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.range, 0, Math.PI * 2);
+                ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+                ctx.stroke();
+            }
+
+            update() {
+                if (this.cooldown > 0) this.cooldown--;
+
+                if (this.cooldown === 0) {
+                    const enemy = enemies.find(e => {
+                        const dist = Math.sqrt((e.x - this.x)**2 + (e.y - this.y)**2);
+                        return dist < this.range;
+                    });
+
+                    if (enemy) {
+                        projectiles.push(new Projectile(this.x, this.y, enemy));
+                        this.cooldown = this.fireRate;
+                    }
+                }
+            }
+        }
+
+        class Projectile {
+            constructor(x, y, target) {
+                this.x = x;
+                this.y = y;
+                this.target = target;
+                this.speed = 5;
+                this.damage = 10;
+            }
+
+            draw() {
+                ctx.fillStyle = '#f1c40f';
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, 4, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            update() {
+                const dx = this.target.x - this.x;
+                const dy = this.target.y - this.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+
+                if (dist < this.speed) {
+                    this.target.health -= this.damage;
+                    this.x = -100; // Remove
+                } else {
+                    this.x += (dx / dist) * this.speed;
+                    this.y += (dy / dist) * this.speed;
+                }
+            }
+        }
+
+        function drawPath() {
+            ctx.strokeStyle = '#34495e';
+            ctx.lineWidth = 40;
+            ctx.lineJoin = 'round';
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.moveTo(path[0].x, path[0].y);
+            for (let i = 1; i < path.length; i++) {
+                ctx.lineTo(path[i].x, path[i].y);
+            }
+            ctx.stroke();
+        }
+
+        function spawnWave() {
+            const count = 5 + wave;
+            for (let i = 0; i < count; i++) {
+                setTimeout(() => {
+                    if (!isGameOver) enemies.push(new Enemy(20 + wave * 10));
+                }, i * 800);
+            }
+        }
+
+        function endGame() {
+            isGameOver = true;
+            gameOverEl.style.display = 'block';
+        }
+
+        canvas.addEventListener('mousedown', (e) => {
+            if (isGameOver) return;
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            if (gold >= TOWER_COST) {
+                // Check if clicking on path (simple bounding box logic)
+                // In a real game, you'd check grid occupancy
+                towers.push(new Tower(x, y));
+                gold -= TOWER_COST;
+                goldEl.innerText = gold;
+            }
+        });
+
+        function gameLoop() {
+            if (isGameOver) return;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            drawPath();
+
+            // Handle Towers
+            towers.forEach(t => {
+                t.update();
+                t.draw();
+            });
+
+            // Handle Projectiles
+            projectiles = projectiles.filter(p => p.x > 0);
+            projectiles.forEach(p => {
+                p.update();
+                p.draw();
+            });
+
+            // Handle Enemies
+            enemies = enemies.filter(e => e.health > 0);
+            enemies.forEach(e => {
+                e.update();
+                e.draw();
+            });
+
+            // Check for death and reward gold
+            enemies.forEach(e => {
+                if (e.health <= 0 && e.targetIndex < path.length) {
+                    gold += 10;
+                    goldEl.innerText = gold;
+                }
+            });
+
+            // Next wave logic
+            if (enemies.length === 0 && frames > 100) {
+                wave++;
+                waveEl.innerText = wave;
+                spawnWave();
+                frames = 1; 
+            }
+
+            frames++;
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Start
+        spawnWave();
+        gameLoop();
+
+    </script>
 </body>
 </html>
