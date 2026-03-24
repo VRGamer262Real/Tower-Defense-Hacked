@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fighter Defense</title>
+    <title>Tower Defense Hacked</title>
     <style>
         :root {
             --purple-ui: #a44cd3;
@@ -23,8 +23,8 @@
 
         /* 16:9 Scalable Container */
         #game-scaler {
-            width: 1920px;
-            height: 1080px;
+            width: 2560px;
+            height: 1440px;
             background: #2c3e50;
             display: flex;
             flex-direction: column;
@@ -149,7 +149,7 @@
         </div>
 
         <div id="header">
-            <div class="gold-box"><span id="gold-val">400</span> <span style="color:#f1c40f">🪙</span></div>
+            <div class="gold-box"><span id="gold-val">400000000</span> <span style="color:#f1c40f">🪙</span></div>
         </div>
 
         <div id="main-container">
@@ -161,7 +161,7 @@
                 <div class="hud-top">
                     <div class="life-bar-wrap">
                         <div id="life-fill"></div>
-                        <div class="life-txt"><span id="health-val">100</span> ❤️</div>
+                        <div class="life-txt"><span id="health-val">10000</span> ❤️</div>
                     </div>
                 </div>
 
@@ -173,9 +173,9 @@
                 <div id="ctx-panel">
                     <div id="ctx-name" style="color:#f1c40f; font-size: 32px;">Blook</div>
                     <div id="ctx-meta" style="color:#ddd; font-size: 18px;">Level 1</div>
-                    <button class="game-btn" style="font-size: 22px; padding: 10px" onclick="upgradeSelected()">UPGRADE (<span id="up-cost">50</span>)</button>
+                    <button class="game-btn" style="font-size: 22px; padding: 10px" onclick="upgradeSelected()">UPGRADE (<span id="up-cost">1</span>)</button>
                     <div style="display: flex; gap: 10px;">
-                        <button class="game-btn" style="flex:1; background:#e67e22; border-color:#d35400; font-size:20px" onclick="sellSelected()">SELL (<span id="sell-val">0</span>)</button>
+                        <button class="game-btn" style="flex:1; background:#e67e22; border-color:#d35400; font-size:20px" onclick="sellSelected()">SELL (<span id="sell-val">99990</span>)</button>
                         <button class="game-btn" style="flex:1; background:#e74c3c; border-color:#c0392b; font-size:20px" onclick="closeCtx()">CLOSE</button>
                     </div>
                 </div>
@@ -192,7 +192,7 @@
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         
-        let gold = 400; let health = 100; let round = 1; let gameSpeed = 1;
+        let gold = 400000000; let health = 10000; let round = 1; let gameSpeed = 1;
         let isRunning = false; let waveActive = false; let over = false;
         let shopSelection = -1; let activeFighter = null;
         let diffMult = 1;
@@ -202,15 +202,15 @@
         let path = [];
 
         const DATA = [
-            { icon: "🐥", name: "Chick", cost: 30, range: 160, dmg: 10, rate: 45, col: "#f1c40f" },
-            { icon: "🐿️", name: "Squirrel", cost: 50, range: 190, dmg: 18, rate: 50, col: "#e67e22" },
-            { icon: "🦍", name: "Gorilla", cost: 70, range: 220, dmg: 25, rate: 55, col: "#5f27cd" },
-            { icon: "🐉", name: "Dragon", cost: 250, range: 450, dmg: 140, rate: 120, col: "#e74c3c" },
-            { icon: "🦉", name: "Owl", cost: 60, range: 240, dmg: 12, rate: 25, col: "#34495e" },
-            { icon: "🐱", name: "Cat", cost: 35, range: 150, dmg: 8, rate: 35, col: "#f39c12" },
-            { icon: "🐷", name: "Pig", cost: 50, range: 180, dmg: 22, rate: 70, col: "#ff9ff3" },
-            { icon: "🦌", name: "Deer", cost: 90, range: 280, dmg: 40, rate: 60, col: "#bdc3c7" },
-            { icon: "👽", name: "Alien", cost: 120, range: 350, dmg: 20, rate: 15, col: "#1dd1a1" }
+            { icon: "🐥", name: "Chick", cost: 3, range: 1600, dmg: 100, rate: 455, col: "#f1c40f" },
+            { icon: "🐿️", name: "Squirrel", cost: 5, range: 1900, dmg: 180, rate: 500, col: "#e67e22" },
+            { icon: "🦍", name: "Gorilla", cost: 7, range: 2200, dmg: 250, rate: 555, col: "#5f27cd" },
+            { icon: "🐉", name: "Dragon", cost: 2, range: 4500, dmg: 1400, rate: 1200, col: "#e74c3c" },
+            { icon: "🦉", name: "Owl", cost: 6, range: 2400, dmg: 120, rate: 250, col: "#34495e" },
+            { icon: "🐱", name: "Cat", cost: 3, range: 1500, dmg: 80, rate: 350, col: "#f39c12" },
+            { icon: "🐷", name: "Pig", cost: 5, range: 1800, dmg: 220, rate: 700, col: "#ff9ff3" },
+            { icon: "🦌", name: "Deer", cost: 9, range: 2800, dmg: 400, rate: 600, col: "#bdc3c7" },
+            { icon: "👽", name: "Alien", cost: 1, range: 3500, dmg: 200, rate: 150, col: "#1dd1a1" }
         ];
 
         function resize() {
@@ -218,8 +218,8 @@
             const wh = window.innerHeight;
             const s = Math.min(ww/1920, wh/1080);
             scaler.style.transform = `scale(${s})`;
-            canvas.width = 1920 - 380;
-            canvas.height = 1080 - 75;
+            canvas.width = 2560 - 380;
+            canvas.height = 1440 - 75;
         }
 
         function createPath() {
